@@ -1,8 +1,8 @@
-package main.src.main;
+package main.components;
 
 
-import main.src.main.annotations.Component;
-import main.src.main.annotations.PostConstructor;
+import main.annotations.Component;
+import main.annotations.PostConstructor;
 
 @Component
 public

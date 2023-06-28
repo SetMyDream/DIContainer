@@ -1,8 +1,8 @@
-package main.src.main;
+package main.components;
 
 
-import main.src.main.annotations.Autowired;
-import main.src.main.annotations.Component;
+import main.annotations.Autowired;
+import main.annotations.Component;
 
 @Component
 public

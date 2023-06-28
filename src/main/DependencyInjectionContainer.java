@@ -1,9 +1,9 @@
-package main.src.main;
+package main;
 
-import main.src.main.annotations.Autowired;
-import main.src.main.annotations.Component;
-import main.src.main.annotations.PostConstructor;
-import main.src.main.annotations.Qualifier;
+import main.annotations.Autowired;
+import main.annotations.Component;
+import main.annotations.PostConstructor;
+import main.annotations.Qualifier;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
@@ -13,6 +13,18 @@ import java.util.concurrent.*;
 
 public class DependencyInjectionContainer {
     private final Map<Class<?>, Object> instances = new ConcurrentHashMap<>();
+
+    public void scanAndRegisterComponents(String basePackage) throws Exception {
+        ClassScanner classScanner = new ClassScanner();
+        List<Class<?>> componentClasses = classScanner.scanClasses(basePackage);
+        registerComponentClasses(componentClasses);
+    }
+
+    private void registerComponentClasses(List<Class<?>> componentClasses) throws Exception {
+        for (Class<?> componentClass : componentClasses) {
+            register(componentClass);
+        }
+    }
 
     public <T> void register(Class<T> componentClass) throws Exception {
         if (!componentClass.isAnnotationPresent(Component.class)) {

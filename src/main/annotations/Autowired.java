@@ -1,4 +1,4 @@
-package main.src.main.annotations;
+package main.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,6 +6,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Component {
+@Target(ElementType.CONSTRUCTOR)
+public @interface Autowired {
 }
