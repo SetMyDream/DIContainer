@@ -1,12 +1,14 @@
 package main;
 
 
-import main.components.AnotherComponent;
 import main.components.ExampleComponent;
+import main.container.DependencyInjectionContainer;
+import main.container.services.CustomPreProcessor;
 
 public class App {
     public static void main(String[] args) throws Exception {
         DependencyInjectionContainer container = new DependencyInjectionContainer();
+        container.addComponentPreProcessor(new CustomPreProcessor());
         container.scanAndRegisterComponents("main.components");
         container.initialize();
 
