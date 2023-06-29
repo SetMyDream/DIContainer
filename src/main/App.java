@@ -1,8 +1,8 @@
 package main;
 
 
-import main.components.AnotherComponent;
 import main.components.ExampleComponent;
+import main.container.DependencyInjectionContainer;
 
 public class App {
     public static void main(String[] args) throws Exception {

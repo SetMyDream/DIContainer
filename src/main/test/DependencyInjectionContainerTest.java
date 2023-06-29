@@ -1,6 +1,6 @@
 package main.test;
 
-import main.DependencyInjectionContainer;
+import main.container.DependencyInjectionContainer;
 import main.components.ExampleComponent;
 import org.junit.jupiter.api.Test;
 
@@ -8,6 +8,8 @@ import static junit.framework.Assert.assertNotSame;
 
 public class DependencyInjectionContainerTest {
 
+
+    //Контейнер должен быть изолированным.
     @Test
     public void testContainerIsolation() throws Exception {
         DependencyInjectionContainer container1 = new DependencyInjectionContainer();

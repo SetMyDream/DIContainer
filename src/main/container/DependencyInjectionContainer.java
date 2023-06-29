@@ -1,9 +1,10 @@
-package main;
+package main.container;
 
-import main.annotations.Autowired;
-import main.annotations.Component;
-import main.annotations.PostConstructor;
-import main.annotations.Qualifier;
+import main.container.services.ClassScanner;
+import main.container.annotations.Autowired;
+import main.container.annotations.Component;
+import main.container.annotations.PostConstructor;
+import main.container.annotations.Qualifier;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
