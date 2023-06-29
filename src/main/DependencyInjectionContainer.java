@@ -37,6 +37,7 @@ public class DependencyInjectionContainer {
         instances.put(componentClass, instance);
     }
 
+    //Доступ к инстансам должен предоставляться методом контейнера, по классу.
     public <T> T getInstance(Class<T> componentClass) {
         return componentClass.cast(instances.get(componentClass));
     }
@@ -58,6 +59,7 @@ public class DependencyInjectionContainer {
         Class<?>[] parameterTypes = constructor.getParameterTypes();
         Object[] parameters = new Object[parameterTypes.length];
 
+        // Зависимости компонента должны быть автоматически включены в него.
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> parameterType = parameterTypes[i];
             Annotation[] annotations = constructor.getParameterAnnotations()[i];
@@ -110,8 +112,11 @@ public class DependencyInjectionContainer {
         }
     }
 
+
+    //Возможность добавлять обработчики ПОСЛЕ добавления в контейнер
     private void postProcess(Object instance) {
-        // Add custom post-processing logic here later
+        System.out.println("Post process for " + instance.getClass());
+        // Add other behavior later, if necessary
     }
 }
 
