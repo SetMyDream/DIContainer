@@ -1,9 +1,11 @@
-package main.src.main;
+package main.container;
 
-import main.src.main.annotations.Autowired;
-import main.src.main.annotations.Component;
-import main.src.main.annotations.PostConstructor;
-import main.src.main.annotations.Qualifier;
+import main.container.services.ClassScanner;
+import main.container.annotations.Autowired;
+import main.container.annotations.Component;
+import main.container.annotations.PostConstructor;
+import main.container.annotations.Qualifier;
+import main.container.services.ComponentPreProcessor;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
@@ -13,18 +15,36 @@ import java.util.concurrent.*;
 
 public class DependencyInjectionContainer {
     private final Map<Class<?>, Object> instances = new ConcurrentHashMap<>();
+    private final List<ComponentPreProcessor> preProcessors = new ArrayList<>();
+
+
+    public void scanAndRegisterComponents(String basePackage) throws Exception {
+        ClassScanner classScanner = new ClassScanner();
+        List<Class<?>> componentClasses = classScanner.scanClasses(basePackage);
+        registerComponentClasses(componentClasses);
+    }
+
+    private void registerComponentClasses(List<Class<?>> componentClasses) throws Exception {
+        for (Class<?> componentClass : componentClasses) {
+            register(componentClass);
+        }
+    }
 
     public <T> void register(Class<T> componentClass) throws Exception {
+        //Will skip not components for now instead of exception;
         if (!componentClass.isAnnotationPresent(Component.class)) {
-            throw new IllegalArgumentException("Class must be annotated with @Component: " + componentClass);
+            return;
+//            throw new IllegalArgumentException("Class must be annotated with @Component: " + componentClass);
         }
 
         T instance = createInstance(componentClass);
+        preProcess(instance);
         postProcess(instance);
 
         instances.put(componentClass, instance);
     }
 
+    //Доступ к инстансам должен предоставляться методом контейнера, по классу.
     public <T> T getInstance(Class<T> componentClass) {
         return componentClass.cast(instances.get(componentClass));
     }
@@ -46,6 +66,7 @@ public class DependencyInjectionContainer {
         Class<?>[] parameterTypes = constructor.getParameterTypes();
         Object[] parameters = new Object[parameterTypes.length];
 
+        // Зависимости компонента должны быть автоматически включены в него.
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> parameterType = parameterTypes[i];
             Annotation[] annotations = constructor.getParameterAnnotations()[i];
@@ -98,8 +119,22 @@ public class DependencyInjectionContainer {
         }
     }
 
+    //Возможность добавлять обработчики ПЕРЕД добавлением в контейнер
+    private <T> void preProcess(T component) {
+        for (ComponentPreProcessor preProcessor : preProcessors) {
+            preProcessor.process(component);
+        }
+    }
+
+    //Добавить препроцессор к кмопоненту
+    public void addComponentPreProcessor(ComponentPreProcessor preProcessor) {
+        preProcessors.add(preProcessor);
+    }
+
+    //Возможность добавлять обработчики ПОСЛЕ добавления в контейнер
     private void postProcess(Object instance) {
-        // Add custom post-processing logic here later
+        System.out.println("Post process for " + instance.getClass());
+        // Add other behavior later, if necessary
     }
 }
 

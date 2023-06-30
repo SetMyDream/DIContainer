@@ -1,12 +1,11 @@
-package main.src.main;
+package main.components;
 
 
-import main.src.main.annotations.Autowired;
-import main.src.main.annotations.Component;
+import main.container.annotations.Autowired;
+import main.container.annotations.Component;
 
 @Component
-public
-class ExampleComponent {
+public class ExampleComponent {
     private final AnotherComponent anotherComponent;
 
     @Autowired
