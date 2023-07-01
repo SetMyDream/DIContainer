@@ -19,8 +19,6 @@ import java.util.concurrent.*;
 
 public class DependencyInjectionContainer {
     private final Map<Class<?>, Object> instances = new ConcurrentHashMap<>();
-    private final List<AnnotationProcessor> preProcessors = new ArrayList<>();
-    private final List<AnnotationProcessor> postProcessors = new ArrayList<>();
 
     public void scanAndRegisterComponents(String basePackage) throws Exception {
         ClassScanner classScanner = new ClassScanner();
@@ -35,11 +33,21 @@ public class DependencyInjectionContainer {
     }
 
     public <T> void register(Class<T> componentClass) throws Exception {
+        //Check if annotation @Component present
         if (!componentClass.isAnnotationPresent(Component.class)) {
             return;
         }
 
+        //Need to initialize some instances once, if they autowired
+        if (instances.containsKey(componentClass)) {
+            return;
+        }
+
+        List<AnnotationProcessor> preProcessors = new ArrayList<>();
+        List<AnnotationProcessor> postProcessors = new ArrayList<>();
+
         T instance = createInstance(componentClass);
+        invokePostConstructors(instance);
 
         Method[] methods = componentClass.getDeclaredMethods();
         for (Method method : methods) {
@@ -50,20 +58,13 @@ public class DependencyInjectionContainer {
             }
         }
 
-        preProcess(instance);
+        annotationProcess(preProcessors);
         instances.put(componentClass, instance);
-        postProcess(instance);
-        invokePostConstructors(instance);
+        annotationProcess(postProcessors);
     }
 
     public <T> T getInstance(Class<T> componentClass) {
         return componentClass.cast(instances.get(componentClass));
-    }
-
-    public void initialize() throws Exception {
-        for (Object instance : instances.values()) {
-            invokePostConstructors(instance);
-        }
     }
 
     private <T> T createInstance(Class<T> componentClass) throws Exception {
@@ -129,27 +130,9 @@ public class DependencyInjectionContainer {
         }
     }
 
-    private void preProcess(Object instance) {
+    private void annotationProcess(List<AnnotationProcessor> preProcessors) {
         for (AnnotationProcessor preProcessor : preProcessors) {
             invokeProcessor(preProcessor);
-        }
-    }
-
-    private void postProcess(Object instance) {
-        for (AnnotationProcessor postProcessor : postProcessors) {
-            invokeProcessor(postProcessor);
-        }
-    }
-
-    public void addComponentPreProcessor(ComponentPreProcessor preProcessor) {
-        if (preProcessor.getClass().isAnnotationPresent(PreProcessor.class)) {
-            preProcessors.add(preProcessor);
-        }
-    }
-
-    public void addComponentPostProcessor(ComponentPostProcessor postProcessor) {
-        if (postProcessor.getClass().isAnnotationPresent(PostProcessor.class)) {
-            postProcessors.add(postProcessor);
         }
     }
 

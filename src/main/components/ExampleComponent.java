@@ -8,11 +8,11 @@ import main.container.annotations.PreProcessor;
 
 @Component
 public class ExampleComponent {
-//    private final AnotherComponent anotherComponent;
+    private final AnotherComponent anotherComponent;
 
     @PreProcessor
     public void preProcess() {
-        System.out.println("Pre-processing ExampleComponent");
+        System.out.println("Pre-processing class " + getClass());
     }
 
 //    @PostProcessor
@@ -22,11 +22,11 @@ public class ExampleComponent {
 
     @Autowired
     public ExampleComponent(AnotherComponent anotherComponent) {
-//        this.anotherComponent = anotherComponent;
+        this.anotherComponent = anotherComponent;
     }
 
     public void doSomething() {
-//        System.out.println("Doing something with AnotherComponent: " + anotherComponent);
+        System.out.println("Doing something with AnotherComponent: " + anotherComponent);
     }
 }
 
