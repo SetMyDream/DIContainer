@@ -17,21 +17,45 @@ import java.util.*;
 import java.util.concurrent.*;
 
 
+/**
+ * Custom container for Inversion of Control (IoC) uses Dependency injection through java.lang.reflect
+ * <p>Workflow:
+ * <p>• Create component class, annotate it with @Component annotation /n
+ * <p>• Annotate constructor with @Autowired, if you use other components as fields in your class
+ * <p>• If you have multiple realizations for a common superclass, use @Qualifier({@code realizationClassName}) to specify class you need
+ * <p>• Use @PostConstruct annotation on your component method if you want to call it immediately after instance creation
+ * <p>• Use @PreProcessor on method if you need do something with instance before adding it to container
+ * <p>• Use @PostProcessor on method if you need do something with instance immediately after adding it to container
+ * <p>• After creating all components you can create new container with constructor {@code container = new DependencyInjectionContainer()}
+ * and use method {@code container.scanAndRegisterComponents(String relativePathScanForComponents)}
+ * <p>• You can also use method {@code container.register(Class)} to add component to container manually
+ * <p>• Use {@code container.getInstance(ExampleComponent.class)} to get instance from container
+ */
 public class DependencyInjectionContainer {
     private final Map<Class<?>, Object> instances = new ConcurrentHashMap<>();
 
+    //Annotation used to scan for components and fill container with it
+
+    /**
+     * Scans the specified base package for component classes and registers them in the container.
+     *
+     * @param basePackage the base package to scan for component classes
+     * @throws Exception if an error occurs during the scanning or registration process
+     */
     public void scanAndRegisterComponents(String basePackage) throws Exception {
         ClassScanner classScanner = new ClassScanner();
         List<Class<?>> componentClasses = classScanner.scanClasses(basePackage);
         registerComponentClasses(componentClasses);
     }
 
-    private void registerComponentClasses(List<Class<?>> componentClasses) throws Exception {
-        for (Class<?> componentClass : componentClasses) {
-            register(componentClass);
-        }
-    }
 
+    /**
+     * Registers the specified component class in the container.
+     *
+     * @param componentClass the component class to register
+     * @param <T>            the type of the component class
+     * @throws Exception if an error occurs during the registration process
+     */
     public <T> void register(Class<T> componentClass) throws Exception {
         //Check if annotation @Component present
         if (!componentClass.isAnnotationPresent(Component.class)) {
@@ -63,8 +87,35 @@ public class DependencyInjectionContainer {
         annotationProcess(postProcessors);
     }
 
+    /**
+     * Returns a list of class names for all instances currently registered in the container.
+     *
+     * @return a list of class names for all instances in the container
+     */
+    public List<String> getInstanceClassNames() {
+        List<String> classNames = new ArrayList<>();
+        for (Class<?> componentClass : instances.keySet()) {
+            classNames.add(componentClass.getName());
+        }
+        return classNames;
+    }
+
+
+    /**
+     * Retrieves an instance of the specified component class from the container.
+     *
+     * @param componentClass the component class to retrieve an instance of
+     * @param <T>            the type of the component class
+     * @return an instance of the specified component class, or null if not found
+     */
     public <T> T getInstance(Class<T> componentClass) {
         return componentClass.cast(instances.get(componentClass));
+    }
+
+    private void registerComponentClasses(List<Class<?>> componentClasses) throws Exception {
+        for (Class<?> componentClass : componentClasses) {
+            register(componentClass);
+        }
     }
 
     private <T> T createInstance(Class<T> componentClass) throws Exception {
