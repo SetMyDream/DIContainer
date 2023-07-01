@@ -23,11 +23,9 @@ public class DependencyInjectionContainerTest {
     public void testContainerIsolation() throws Exception {
         DependencyInjectionContainer container1 = new DependencyInjectionContainer();
         container1.scanAndRegisterComponents("main.components");
-        container1.initialize();
 
         DependencyInjectionContainer container2 = new DependencyInjectionContainer();
         container2.scanAndRegisterComponents("main.components");
-        container2.initialize();
 
         ExampleComponent exampleComponent1 = container1.getInstance(ExampleComponent.class);
         ExampleComponent exampleComponent2 = container2.getInstance(ExampleComponent.class);

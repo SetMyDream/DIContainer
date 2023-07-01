@@ -1,10 +1,14 @@
 package main.container;
 
+import main.container.services.AnnotationProcessor;
 import main.container.services.ClassScanner;
 import main.container.annotations.Autowired;
 import main.container.annotations.Component;
 import main.container.annotations.PostConstructor;
 import main.container.annotations.Qualifier;
+import main.container.annotations.PreProcessor;
+import main.container.annotations.PostProcessor;
+import main.container.services.ComponentPostProcessor;
 import main.container.services.ComponentPreProcessor;
 
 import java.lang.annotation.*;
@@ -15,8 +19,6 @@ import java.util.concurrent.*;
 
 public class DependencyInjectionContainer {
     private final Map<Class<?>, Object> instances = new ConcurrentHashMap<>();
-    private final List<ComponentPreProcessor> preProcessors = new ArrayList<>();
-
 
     public void scanAndRegisterComponents(String basePackage) throws Exception {
         ClassScanner classScanner = new ClassScanner();
@@ -31,28 +33,38 @@ public class DependencyInjectionContainer {
     }
 
     public <T> void register(Class<T> componentClass) throws Exception {
-        //Will skip not components for now instead of exception;
+        //Check if annotation @Component present
         if (!componentClass.isAnnotationPresent(Component.class)) {
             return;
-//            throw new IllegalArgumentException("Class must be annotated with @Component: " + componentClass);
         }
+
+        //Need to initialize some instances once, if they autowired
+        if (instances.containsKey(componentClass)) {
+            return;
+        }
+
+        List<AnnotationProcessor> preProcessors = new ArrayList<>();
+        List<AnnotationProcessor> postProcessors = new ArrayList<>();
 
         T instance = createInstance(componentClass);
-        preProcess(instance);
-        postProcess(instance);
+        invokePostConstructors(instance);
 
+        Method[] methods = componentClass.getDeclaredMethods();
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(PreProcessor.class)) {
+                preProcessors.add(new AnnotationProcessor(instance, method));
+            } else if (method.isAnnotationPresent(PostProcessor.class)) {
+                postProcessors.add(new AnnotationProcessor(instance, method));
+            }
+        }
+
+        annotationProcess(preProcessors);
         instances.put(componentClass, instance);
+        annotationProcess(postProcessors);
     }
 
-    //Доступ к инстансам должен предоставляться методом контейнера, по классу.
     public <T> T getInstance(Class<T> componentClass) {
         return componentClass.cast(instances.get(componentClass));
-    }
-
-    public void initialize() throws Exception {
-        for (Object instance : instances.values()) {
-            invokePostConstructors(instance);
-        }
     }
 
     private <T> T createInstance(Class<T> componentClass) throws Exception {
@@ -66,7 +78,6 @@ public class DependencyInjectionContainer {
         Class<?>[] parameterTypes = constructor.getParameterTypes();
         Object[] parameters = new Object[parameterTypes.length];
 
-        // Зависимости компонента должны быть автоматически включены в него.
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> parameterType = parameterTypes[i];
             Annotation[] annotations = constructor.getParameterAnnotations()[i];
@@ -119,24 +130,25 @@ public class DependencyInjectionContainer {
         }
     }
 
-    //Возможность добавлять обработчики ПЕРЕД добавлением в контейнер
-    private <T> void preProcess(T component) {
-        for (ComponentPreProcessor preProcessor : preProcessors) {
-            preProcessor.process(component);
+    private void annotationProcess(List<AnnotationProcessor> preProcessors) {
+        for (AnnotationProcessor preProcessor : preProcessors) {
+            invokeProcessor(preProcessor);
         }
     }
 
-    //Добавить препроцессор к кмопоненту
-    public void addComponentPreProcessor(ComponentPreProcessor preProcessor) {
-        preProcessors.add(preProcessor);
+    //can be further modified, but as for now method excessive
+    private void invokeProcessor(AnnotationProcessor processor) {
+        processor.process();
     }
 
-    //Возможность добавлять обработчики ПОСЛЕ добавления в контейнер
-    private void postProcess(Object instance) {
-        System.out.println("Post process for " + instance.getClass());
-        // Add other behavior later, if necessary
+    private AnnotationProcessor createAnnotationProcessor(Object processor, Method method) {
+        if (processor instanceof ComponentPostProcessor) {
+            return new ComponentPostProcessor((ComponentPostProcessor) processor, method);
+        } else if (processor instanceof ComponentPreProcessor) {
+            return new ComponentPreProcessor((ComponentPreProcessor) processor, method);
+        } else {
+            return new AnnotationProcessor(processor, method);
+        }
     }
 }
-
-
 
